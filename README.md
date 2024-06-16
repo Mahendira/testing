@@ -1,3 +1,46 @@
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import org.apache.geode.management.internal.cli.shell.Gfsh;
+import org.apache.geode.management.internal.beans.MemberMXBean;
+
+public class GeodeJMXRegionCreator {
+
+    public static void main(String[] args) {
+        try {
+            // JMX connection properties
+            String jmxHost = "localhost";
+            int jmxPort = 1099; // Default JMX port for Geode
+
+            // Connect to the JMX service
+            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + jmxHost + ":" + jmxPort + "/jmxrmi");
+            JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
+            MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+
+            // Create MemberMXBean for locator (replace locator1 with your actual locator name)
+            ObjectName locatorObjectName = new ObjectName("GemFire:type=Member,member=locator1");
+            MemberMXBean locatorMember = JMX.newMBeanProxy(mbsc, locatorObjectName, MemberMXBean.class);
+
+            // Execute gfsh command via MemberMXBean
+            String command = "create region --name=MyRegion --type=PARTITION";
+            String commandResult = locatorMember.processCommand(command);
+
+            // Print command result
+            System.out.println("Command Result:\n" + commandResult);
+
+            // Close JMX connection
+            jmxc.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+=============================
+
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.result.CommandResult;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
