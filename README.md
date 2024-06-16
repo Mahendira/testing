@@ -1,15 +1,4 @@
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-import org.apache.geode.management.internal.cli.shell.Gfsh;
-import org.apache.geode.management.internal.beans.MemberMXBean;
-
-public class GeodeJMXRegionCreator {
-
-    public static void main(String[] args) {
-        try {
+ try {
             // JMX connection properties
             String jmxHost = "localhost";
             int jmxPort = 1099; // Default JMX port for Geode
@@ -36,9 +25,6 @@ public class GeodeJMXRegionCreator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-}
-
 =============================
 
 import org.apache.geode.management.internal.cli.shell.Gfsh;
