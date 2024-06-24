@@ -1,3 +1,54 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class JsonTransformer {
+    public static void main(String[] args) {
+        String sourceJson = "[{\"rna\": \"{\\\"etl\\\":\\\"11\\\",\\\"ttl\\\":\\\"12\\\", \\\"rns\\\":[],\\\"mtype\\\":null}\", \"rname\":\"rname1\", \"uid\":\"t123\"}, " +
+                "{\"rna\": \"{\\\"etl\\\":\\\"66\\\",\\\"ttl\\\":\\\"66\\\", \\\"rns\\\":[],\\\"mtype\\\":null}\", \"rname\":\"Deleted-rname1\", \"uid\":\"t123\"}, " +
+                "{\"rna\": \"{\\\"etl\\\":\\\"33\\\",\\\"ttl\\\":\\\"35\\\", \\\"rns\\\":[],\\\"mtype\\\":null}\", \"rname\":\"rname1\", \"uid\":\"t123\"}, " +
+                "{\"rna\": \"{\\\"etl\\\":\\\"44\\\",\\\"ttl\\\":\\\"45\\\", \\\"rns\\\":[],\\\"mtype\\\":null}\", \"rname\":\"rname2\", \"uid\":\"t44\"}]";
+
+        JSONArray sourceArray = new JSONArray(sourceJson);
+        JSONArray targetArray = new JSONArray();
+        Set<String> processedRnames = new HashSet<>();
+
+        // Iterate from the end to the beginning
+        for (int i = sourceArray.length() - 1; i >= 0; i--) {
+            JSONObject sourceObject = sourceArray.getJSONObject(i);
+            String rname = sourceObject.getString("rname");
+
+            // Skip if rname contains "Deleted" or is already processed
+            if (rname.contains("Deleted") || processedRnames.contains(rname)) {
+                continue;
+            }
+
+            // Mark rname as processed
+            processedRnames.add(rname);
+
+            // Parse the rna field as a JSON object
+            JSONObject rnaObject = new JSONObject(sourceObject.getString("rna"));
+
+            // Create the target JSON object
+            JSONObject targetObject = new JSONObject();
+            targetObject.put("rname", rname);
+            targetObject.put("etl", rnaObject.getString("etl"));
+            targetObject.put("ttl", rnaObject.getString("ttl"));
+
+            // Add to the target array
+            targetArray.put(targetObject);
+        }
+
+        // Print the source and target JSON
+        System.out.println("Source JSON: " + sourceArray.toString(4));
+        System.out.println("Target JSON: " + targetArray.toString(4));
+    }
+}
+
+========================================
+ 
  try {
             // JMX connection properties
             String jmxHost = "localhost";
