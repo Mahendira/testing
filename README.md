@@ -1,3 +1,5 @@
+ ObjectName locatorObjectName = new ObjectName("GemFire:type=Locator,*");
+            
             for (ObjectName mbean : mbeans) {
                 // Retrieve and print all attributes of the locator MBean
                 MBeanInfo mBeanInfo = mbsc.getMBeanInfo(mbean);
