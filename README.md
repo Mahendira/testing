@@ -1,12 +1,18 @@
-           Set<ObjectName> mbeans = mbsc.queryNames(locatorObjectName, null);
-
             for (ObjectName mbean : mbeans) {
-                // Retrieve and print the attributes of the locator MBean
-                String memberName = (String) mbsc.getAttribute(mbean, "Member");
-                String host = (String) mbsc.getAttribute(mbean, "Host");
-                int port = (Integer) mbsc.getAttribute(mbean, "Port");
-
-                System.out.println("Member Name: " + memberName);
-                System.out.println("Host: " + host);
-                System.out.println("Port: " + port);
+                // Retrieve and print all attributes of the locator MBean
+                MBeanInfo mBeanInfo = mbsc.getMBeanInfo(mbean);
+                MBeanAttributeInfo[] attributes = mBeanInfo.getAttributes();
+                
+                System.out.println("Attributes of MBean: " + mbean.getCanonicalName());
+                for (MBeanAttributeInfo attributeInfo : attributes) {
+                    String attributeName = attributeInfo.getName();
+                    try {
+                        Object attributeValue = mbsc.getAttribute(mbean, attributeName);
+                        System.out.println(attributeName + ": " + attributeValue);
+                    } catch (Exception e) {
+                        System.out.println("Failed to retrieve value for attribute: " + attributeName);
+                        e.printStackTrace();
+                    }
+                }
+                System.out.println();
             }
