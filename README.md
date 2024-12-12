@@ -1,3 +1,8 @@
+
+
+    const char *adfs_url = "https://your-adfs-server/adfs/oauth2/token/introspection";
+    const char *adfs_client_id = "your-client-id";
+    const char *adfs_client_secret = "your-client-secret";
 #include "redismodule.h"
 #include <jwt.h>
 #include <curl/curl.h>
@@ -18,11 +23,6 @@ int ValidateTokenWithADFS(const char *token) {
         jwt_free(jwt);
         return 0; // Failed to initialize CURL
     }
-
-    const char *adfs_url = "https://your-adfs-server/adfs/oauth2/token/introspection";
-    const char *adfs_client_id = "your-client-id";
-    const char *adfs_client_secret = "your-client-secret";
-
     char post_fields[1024];
     snprintf(post_fields, sizeof(post_fields), "token=%s", token);
 
