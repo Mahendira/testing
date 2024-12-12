@@ -1,14 +1,9 @@
-
-
-    const char *adfs_url = "https://your-adfs-server/adfs/oauth2/token/introspection";
-    const char *adfs_client_id = "your-client-id";
-    const char *adfs_client_secret = "your-client-secret";
-#include "redismodule.h"
-#include <jwt.h>
-#include <curl/curl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+include "redismodule.h"
+include <jwt.h>
+include <curl/curl.h>
+include <string.h>
+include <stdlib.h>
+include <stdio.h>
 
 int ValidateTokenWithADFS(const char *token) {
     jwt_t *jwt = NULL;
@@ -16,6 +11,11 @@ int ValidateTokenWithADFS(const char *token) {
     if (ret != 0) {
         return 0; // Invalid JWT
     }
+
+
+    const char *adfs_url = "https://your-adfs-server/adfs/oauth2/token/introspection";
+    const char *adfs_client_id = "your-client-id";
+    const char *adfs_client_secret = "your-client-secret";
 
     // Optionally: Use ADFS introspection endpoint for further validation
     CURL *curl = curl_easy_init();
