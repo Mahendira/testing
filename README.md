@@ -1,82 +1,42 @@
-include "redismodule.h"
-include <jwt.h>
-include <curl/curl.h>
-include <string.h>
-include <stdlib.h>
-include <stdio.h>
+#include "valkey.h"
+#include <string.h>
 
-int ValidateTokenWithADFS(const char *token) {
-    jwt_t *jwt = NULL;
-    int ret = jwt_decode(&jwt, token, NULL, 0);
-    if (ret != 0) {
-        return 0; // Invalid JWT
+/* Add user and set password automatically */
+int add_user_and_set_password_on_load(VKModuleCtx *ctx) {
+    // Define the username and password
+    const char *username = "default_user";
+    const char *password = "secure_password";
+
+    // Check if the user already exists
+    if (VK_UserExists(ctx, username)) {
+        // If the user exists, update the password
+        if (VK_SetUserPassword(ctx, username, password) != VK_OK) {
+            VK_Log(ctx, "ERROR: Failed to update password for existing user '%s'", username);
+            return VK_ERR;
+        }
+        VK_Log(ctx, "INFO: Password updated for existing user '%s'", username);
+    } else {
+        // If the user does not exist, add the user and set the password
+        if (VK_AddUser(ctx, username, password) != VK_OK) {
+            VK_Log(ctx, "ERROR: Failed to add user '%s'", username);
+            return VK_ERR;
+        }
+        VK_Log(ctx, "INFO: User '%s' added with password", username);
     }
 
-
-    const char *adfs_url = "https://your-adfs-server/adfs/oauth2/token/introspection";
-    const char *adfs_client_id = "your-client-id";
-    const char *adfs_client_secret = "your-client-secret";
-
-    // Optionally: Use ADFS introspection endpoint for further validation
-    CURL *curl = curl_easy_init();
-    if (!curl) {
-        jwt_free(jwt);
-        return 0; // Failed to initialize CURL
-    }
-    char post_fields[1024];
-    snprintf(post_fields, sizeof(post_fields), "token=%s", token);
-
-    struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
-
-    curl_easy_setopt(curl, CURLOPT_URL, adfs_url);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_fields);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    long response_code;
-    curl_easy_perform(curl);
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
-    curl_easy_cleanup(curl);
-    jwt_free(jwt);
-
-    return response_code == 200; // Return true if token is valid
+    return VK_OK;
 }
 
-Intercept commands and enforce token validation.
-int AuthenticatedCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    if (argc < 2) {
-        return RedisModule_ReplyWithError(ctx, "ERR token required");
+/* Module initialization function */
+int VK_MODULE_INIT_FUNC(VKModuleCtx *ctx) {
+    // Automatically add a user and set their password when the module is loaded
+    if (add_user_and_set_password_on_load(ctx) != VK_OK) {
+        return VK_ERR;
     }
 
-    const char *token = RedisModule_StringPtrLen(argv[1], NULL);
-
-    if (!ValidateTokenWithADFS(token)) {
-        return RedisModule_ReplyWithError(ctx, "ERR invalid token");
-    }
-
-    // Token is valid; forward the command
-    return RedisModule_CallReplyToRedisReply(ctx, RedisModule_Call(ctx, "PING", ""));
+    VK_Log(ctx, "INFO: User management module loaded successfully");
+    return VK_OK;
 }
-
-Module Initialization
-
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    if (RedisModule_Init(ctx, "authmodule", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
-        return REDISMODULE_ERR;
-    }
-
-    if (RedisModule_CreateCommand(ctx, "auth.ping", AuthenticatedCommand, "write", 1, 1, 1) == REDISMODULE_ERR) {
-        return REDISMODULE_ERR;
-    }
-
-    return REDISMODULE_OK;
-}
-
-
-===
-gcc -fPIC -shared -o authmodule.so authmodule.c -I/usr/include/hiredis -ljwt -lcurl
-
 
 
 
