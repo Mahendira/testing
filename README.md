@@ -1,36 +1,45 @@
-#include "redismodule.h"
 
-static void AuthFilter(RedisModuleCommandFilterCtx *filter) {
-    const char *cmd = RedisModule_CommandFilterArgGet(filter, 0);
-    if (cmd && !strcasecmp(cmd, "AUTH")) {
-        // Always reply OK and block Valkey’s built-in AUTH
-        RedisModule_CommandFilterArgReplace(filter, 0, RedisModule_CreateString(NULL, "MYAUTH", 6));
+
+#include "valkeymodule.h"
+
+int GetClientIPCommand(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {
+    REDISMODULE_NOT_USED(argv);
+    REDISMODULE_NOT_USED(argc);
+
+    uint64_t client_id = ValkeyModule_GetClientId(ctx);
+
+    ValkeyModuleClientInfo ci;
+    memset(&ci, 0, sizeof(ci));
+    ci.version = VALKEYMODULE_CLIENTINFO_VERSION;
+
+    if (ValkeyModule_GetClientInfoById(&ci, client_id) != VALKEYMODULE_OK) {
+        return ValkeyModule_ReplyWithError(ctx, "ERR unable to fetch client info");
     }
+
+    if (ci.addr[0] == '\0') {
+        return ValkeyModule_ReplyWithNull(ctx);
+    }
+
+    /* ci.addr is "IP:port" */
+    ValkeyModule_ReplyWithStringBuffer(ctx, ci.addr, strlen(ci.addr));
+    return VALKEYMODULE_OK;
 }
+What you get
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    if (RedisModule_Init(ctx, "authfilter", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
-        return REDISMODULE_ERR;
+ci.addr → "192.168.1.25:53422"
 
-    // Register command filter
-    RedisModule_RegisterCommandFilter(ctx, AuthFilter, 0);
+This is the actual TCP peer as Valkey sees it
 
-    return REDISMODULE_OK;
-}
-Use the Command Filter API in your module:
+Inside a Valkey module command handler, you can retrieve the peer IP + port of the client that issued the command using:
 
-Client sends AUTH foobar.
+ValkeyModule_GetClientInfoById()
 
-Your filter intercepts it, swaps the command to MYAUTH foobar.
+This is the official, supported API for modules.
 
-Valkey executes your module command, not the built-in AUTH.
+High-level flow
 
-You decide whether to ignore, log, or authenticate.
+Get the client ID for the current command context
 
-Clients can keep using AUTH.
+Fetch the client info struct
 
-Wrong passwords don’t trigger errors.
-
-You don’t touch acl.c.
-
-You fully control auth logic.
+Read the IP address
