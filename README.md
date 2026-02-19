@@ -289,7 +289,7 @@ Remove master B
 Repeat
 
 This prevents stale node-ids / slot layouts during automation.
-===============================================================================
+=============================================================================================Option3==============================================================
 oPTION -3---------------
 spread across all remaining masters (best balance)
 Perfect — here’s the best-balance, dynamic shrink algorithm (spread slots across all remaining masters), plus a ready-to-drop-in Ansible task file that implements it.
@@ -1090,7 +1090,7 @@ It may unbalance slot distribution (since everything lands on one master). If yo
 
 valkey-cli --cluster rebalance <seed_ip:port> --cluster-yes
 
-
+==================================================================================================Approaches Summary ==================================================
 (I can add that as a run_once Ansible task.)
 
 If you want this to also support remove_port per node (mixed ports) or TLS/auth, tell me what you use and I’ll adjust the commands.
@@ -1146,7 +1146,7 @@ If you want simple + good enough: #1
 If you want, I can also add a “hybrid”:
 
 Use #2 for speed, then run a final valkey-cli --cluster rebalance <seed> --cluster-yes to restore balance automatically.
-
+==================================================================================================================================Option 4 Hybrid======================
 yes hybrid
 
 Hybrid = fast removal (single-destination reshard) + an optional final rebalance to spread slots evenly again.
@@ -1219,6 +1219,7 @@ You still want the cluster to end up balanced
 You’re okay with a short “rebalance phase” after the shrink
 
 If you tell me your typical master count (3? 6? 12?) and whether you want to limit how much data moves during rebalance, I can add conservative settings (so rebalance doesn’t churn too much).
+=================================
 
 
 
