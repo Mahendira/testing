@@ -1,4 +1,18 @@
 ---
+#1) Round-robin redistribution across remaining masters
+#What it does: split the slots you’re moving across all remaining masters in a simple rotating order (no “load” awareness).
+#Pros: simple, reasonably balanced, deterministic, easy to automate.
+#Cons: not optimal if masters are already uneven (can make imbalance worse).
+#Best for: fast automation when your cluster is usually already balanced.
+#Mechanic: multi-pass reshard where each pass targets the next master in the list.
+
+# remove_nodes_round_robin.yml
+# Round-robin redistribution across remaining masters (no load awareness)
+# - User provides nodes_to_remove as ["ip:port", ...]
+# - For replicas: del-node
+# - For masters: compute owned slots, distribute across remaining masters in rotating order,
+#   perform multi-pass reshard, repoint replicas, then del-node
+
 - name: Remove Valkey nodes using Round-Robin redistribution
   hosts: localhost
   gather_facts: false
