@@ -68,7 +68,7 @@ unsigned char *base64_decode(const char *input, size_t *out_len) {
     return out;
 }
 
-/* Wrapper: Base64URL decode */
+/* Wrapper */
 unsigned char *base64url_decode(const char *input, size_t *out_len) {
     char *b64 = base64url_to_base64(input);
     if (!b64) return NULL;
@@ -78,12 +78,17 @@ unsigned char *base64url_decode(const char *input, size_t *out_len) {
     return decoded;
 }
 
-/* Example usage */
-int main() {
-    const char *jwt_payload = "eyJzdWIiOiIxMjM0NTY3ODkwIn0"; // {"sub":"1234567890"}
+/* Main: takes input from CLI */
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <base64url_string>\n", argv[0]);
+        return 1;
+    }
+
+    const char *input = argv[1];
 
     size_t out_len;
-    unsigned char *decoded = base64url_decode(jwt_payload, &out_len);
+    unsigned char *decoded = base64url_decode(input, &out_len);
 
     if (decoded) {
         printf("Decoded: %.*s\n", (int)out_len, decoded);
